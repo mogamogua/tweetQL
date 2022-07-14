@@ -15,14 +15,27 @@ let tweets = [
   }
 ];
 
+let users = [
+  {
+    id: "1",
+    firstName: "Jisu",
+    lastName: "Kim",
+  },
+  {
+    id: "2",
+    firstName: "meong",
+    lastName: "nyang",
+  },
+]
+
 //typeDefinition필요. - Query 타입은 필수적으로 써줘야함.
 //typeDef는 mongoose의 schema와 비슷하게 데이터의 형식을 정하는 것. 
 const typeDefs = gql`
   type User {
     id: ID!
-    username: String!
     firstName: String!
     lastName: String!
+    fullName: String!
   }
   type Tweet {
     id: ID!
@@ -32,6 +45,7 @@ const typeDefs = gql`
   type Query {
     allTweets: [Tweet!]!
     tweet(id: ID!): Tweet
+    allUsers: [User!]!
   }
   type Mutation {
     postTweet(text: String!, userId: ID!): Tweet
@@ -63,6 +77,10 @@ const resolvers = {
       console.log(`${id}에 해당하는 트윗찾기`)
       return tweets.find(tweet => tweet.id === id);
     },
+    allUsers() {
+      console.log("all Users are called")
+      return users;
+    }
   },
   Mutation: { //data를 수정하는 요청 시 실행될 함수들
     postTweet(_, {text, userId}) {
@@ -78,6 +96,13 @@ const resolvers = {
       if (!tweet) return false;
       tweets = tweets.filter((tweet) => tweet.id !== id);
       return true;
+    },
+  },
+  //type resolver
+  User: { //특정 필드를 다이내믹필드로 만들 수 있다.
+     //data에는 fullName필드가 없으므로 graphQL은 User의 fullName resolver로 해당 data를 찾는다.
+    fullName({firstName, lastName}) {
+      return `${firstName} ${lastName}`;
     },
   },
 };
