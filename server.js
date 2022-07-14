@@ -4,15 +4,18 @@ let tweets = [
   {
     id: "1",
     text: "first tweet",
+    userId: "2",
   },
   {
     id: "2",
     text: "second tweet",
+    userId: "2",
   },
   {
     id: "3",
     text: "third tweet",
-  }
+    userId: "1",
+  },
 ];
 
 let users = [
@@ -87,6 +90,7 @@ const resolvers = {
       const newTweet = {
         id : tweets.length+1,
         text,
+        userId,
       }
       tweets.push(newTweet);
       return newTweet;
@@ -105,7 +109,27 @@ const resolvers = {
       return `${firstName} ${lastName}`;
     },
   },
+  Tweet: {
+    //Tweet과 User연결하기
+    //author라는 필드를 만들어준다.
+    author({userId}) {
+      const user = users.find((user) => user.id === userId);
+      if (!user) return null;
+      return user;
+    }
+  }
 };
+
+// {
+//   allTweets {
+//     id,
+//     text,
+//     author { 이렇게 tweet과 연결된 user를 불러올 수 있다.
+//       id,
+//       fullName
+//     }
+//   }
+// }
 
 const server = new ApolloServer({typeDefs, resolvers});
 
