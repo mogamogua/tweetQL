@@ -1,4 +1,5 @@
 import {ApolloServer, gql} from "apollo-server";
+import fetch from "node-fetch";
 
 let tweets = [
   {
@@ -33,25 +34,59 @@ let users = [
 
 //typeDefinition필요. - Query 타입은 필수적으로 써줘야함.
 //typeDef는 mongoose의 schema와 비슷하게 데이터의 형식을 정하는 것. 
+// """ """ 안에 type에 대한 description을 손쉽게 추가할 수 있다.
 const typeDefs = gql`
   type User {
     id: ID!
     firstName: String!
     lastName: String!
+    """
+    fullName is sum of firstName and lastName.
+    """
     fullName: String!
   }
+  """
+  Tweet object represents a resource for a Tweet.
+  """
   type Tweet {
     id: ID!
     text: String!
     author: User
   }
+  type Movie {
+    id: Int!
+    url: String
+    imdb_code: String!
+    title: String
+    title_english: String!
+    slug: String!
+    year: Int!
+    rating: Float!
+    runtime: Float
+    genres: [String]!
+    summary: String
+    description_full: String!
+    synopsis: String
+    yt_trailer_code: String!
+    language: String!
+    background_image: String
+    background_image_original: String
+    small_cover_image: String
+    medium_cover_image: String
+    large_cover_image: String
+  }
   type Query {
+    allMovies: [Movie]
+    movie(id: String!): Movie!
     allTweets: [Tweet!]!
     tweet(id: ID!): Tweet
     allUsers: [User!]!
   }
   type Mutation {
     postTweet(text: String!, userId: ID!): Tweet
+    """
+    delete a tweet that has same id given to request.
+    """
     deleteTweet(id: ID!): Boolean!
   }
 `;
@@ -83,7 +118,19 @@ const resolvers = {
     allUsers() {
       console.log("all Users are called")
       return users;
-    }
+    },
+    //restAPI를 graphQL로 감싸기.
+    //스키마 작성후, data를 가져와서 넘겨주면된다.
+    allMovies() {
+      return fetch("https://yts.mx/api/v2/list_movies.json")
+        .then((response) => response.json())
+        .then((json) => json.data.movies);
+    },
+    movie(_, {id}) {
+      return fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`)
+        .then((response) => response.json())
+        .then((json) => json.data.movie);
+    },
   },
   Mutation: { //data를 수정하는 요청 시 실행될 함수들
     postTweet(_, {text, userId}) {
@@ -105,7 +152,7 @@ const resolvers = {
   //type resolver
   User: { //특정 필드를 다이내믹필드로 만들 수 있다.
      //data에는 fullName필드가 없으므로 graphQL은 User의 fullName resolver로 해당 data를 찾는다.
-    fullName({firstName, lastName}) {
+     fullName({firstName, lastName}) {
       return `${firstName} ${lastName}`;
     },
   },
