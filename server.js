@@ -1,6 +1,6 @@
 import {ApolloServer, gql} from "apollo-server";
 
-const tweets = [
+let tweets = [
   {
     id: "1",
     text: "first tweet",
@@ -56,7 +56,7 @@ const typeDefs = gql`
 // request가 될 때 실행되는 함수들
 const resolvers = {
   Query: {
-    allTweets() {
+    allTweets() { //함수 이름은 type과 동일해야한다.
       return tweets;
     },//allTweets을 요청할 때 tweets을 리턴해준다.
     tweet(root, {id}) { //첫번째 resolver함수의 매개변수는 무조건 root. 요청할 때 넘겨받는 매개변수는 두번째.
@@ -64,7 +64,23 @@ const resolvers = {
       return tweets.find(tweet => tweet.id === id);
     },
   },
-}
+  Mutation: { //data를 수정하는 요청 시 실행될 함수들
+    postTweet(_, {text, userId}) {
+      const newTweet = {
+        id : tweets.length+1,
+        text,
+      }
+      tweets.push(newTweet);
+      return newTweet;
+    },
+    deleteTweet(_, {id}) {
+      const tweet = tweets.find((tweet) => tweet.id === id);
+      if (!tweet) return false;
+      tweets = tweets.filter((tweet) => tweet.id !== id);
+      return true;
+    },
+  },
+};
 
 const server = new ApolloServer({typeDefs, resolvers});
 
