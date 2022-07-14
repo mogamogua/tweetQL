@@ -1,8 +1,22 @@
 import {ApolloServer, gql} from "apollo-server";
 
+const tweets = [
+  {
+    id: "1",
+    text: "first tweet",
+  },
+  {
+    id: "2",
+    text: "second tweet",
+  },
+  {
+    id: "3",
+    text: "third tweet",
+  }
+];
+
 //typeDefinition필요. - Query 타입은 필수적으로 써줘야함.
 //typeDef는 mongoose의 schema와 비슷하게 데이터의 형식을 정하는 것. 
-
 const typeDefs = gql`
   type User {
     id: ID!
@@ -13,7 +27,7 @@ const typeDefs = gql`
   type Tweet {
     id: ID!
     text: String!
-    author: User!
+    author: User
   }
   type Query {
     allTweets: [Tweet!]!
@@ -39,7 +53,20 @@ const typeDefs = gql`
 //[Tweet!]! : 무조건 array를 돌려주는데, 해당 어레이는 하나 이상의 Tweet이 들어있다.
 //요청의 결과가 무조건 주어진다면(null이 아니라면) 느낌표를 붙여주자.
 
-const server = new ApolloServer({typeDefs});
+// request가 될 때 실행되는 함수들
+const resolvers = {
+  Query: {
+    allTweets() {
+      return tweets;
+    },//allTweets을 요청할 때 tweets을 리턴해준다.
+    tweet(root, {id}) { //첫번째 resolver함수의 매개변수는 무조건 root. 요청할 때 넘겨받는 매개변수는 두번째.
+      console.log(`${id}에 해당하는 트윗찾기`)
+      return tweets.find(tweet => tweet.id === id);
+    },
+  },
+}
+
+const server = new ApolloServer({typeDefs, resolvers});
 
 server.listen().then(({url}) => {
   console.log(`Running on ${url}`);
